@@ -1,9 +1,30 @@
-import { useState } from 'react';
-import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area,
-} from 'recharts';
-import { Download, Calendar, TrendingUp, DollarSign, Users, ShoppingCart } from 'lucide-react';
+import { lazy, Suspense, useState } from 'react';
+import { Download, TrendingUp, DollarSign, Users, ShoppingCart } from 'lucide-react';
+import { Loader } from '../../../components/ui/Loader/Loader';
+
+const RevenueExpensesChart = lazy(() =>
+  import('../components/RevenueExpensesChart').then((m) => ({
+    default: m.RevenueExpensesChart,
+  }))
+);
+
+const CategoryPieChart = lazy(() =>
+  import('../components/CategoryPieChart').then((m) => ({
+    default: m.CategoryPieChart,
+  }))
+);
+
+const WeeklyTrafficChart = lazy(() =>
+  import('../components/WeeklyTrafficChart').then((m) => ({
+    default: m.WeeklyTrafficChart,
+  }))
+);
+
+const ProfitTrendChart = lazy(() =>
+  import('../components/ProfitTrendChart').then((m) => ({
+    default: m.ProfitTrendChart,
+  }))
+);
 
 const monthlyRevenue = [
   { month: 'Jan', revenue: 42000, expenses: 28000, profit: 14000 },
@@ -107,70 +128,19 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Revenue & Expenses</h3>
-            <div className="flex items-center gap-1 text-xs text-gray-400">
-              <Calendar className="w-3.5 h-3.5" /> 2024
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={monthlyRevenue} barGap={2}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
-              <XAxis dataKey="month" stroke="#6B7280" fontSize={11} />
-              <YAxis stroke="#6B7280" fontSize={11} tickFormatter={(v) => `$${v / 1000}k`} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                formatter={(value) => [`$${Number(value ?? 0).toLocaleString()}`, '']}
-              />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
-              <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Revenue" />
-              <Bar dataKey="expenses" fill="#ef4444" radius={[4, 4, 0, 0]} name="Expenses" opacity={0.7} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <Suspense fallback={<Loader text="Loading chart..." />}>
+          <RevenueExpensesChart data={monthlyRevenue} />
+        </Suspense>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Sales by Category</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie data={categoryData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value">
-                {categoryData.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }} formatter={(value) => [`${Number(value ?? 0)}%`, '']} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="space-y-2 mt-2">
-            {categoryData.map((cat) => (
-              <div key={cat.name} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                  <span className="text-gray-700 dark:text-gray-300">{cat.name}</span>
-                </div>
-                <span className="font-medium text-gray-900 dark:text-white">{cat.value}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <Suspense fallback={<Loader text="Loading chart..." />}>
+          <CategoryPieChart data={categoryData} />
+        </Suspense>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Weekly Traffic</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={weeklyTraffic}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
-              <XAxis dataKey="day" stroke="#6B7280" fontSize={11} />
-              <YAxis stroke="#6B7280" fontSize={11} />
-              <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }} />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
-              <Area type="monotone" dataKey="visitors" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.15} name="Visitors" />
-              <Area type="monotone" dataKey="pageViews" stroke="#10b981" fill="#10b981" fillOpacity={0.1} name="Page Views" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        <Suspense fallback={<Loader text="Loading chart..." />}>
+          <WeeklyTrafficChart data={weeklyTraffic} />
+        </Suspense>
 
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Top Products</h3>
@@ -203,20 +173,9 @@ export const ReportsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Profit Trend</h3>
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={monthlyRevenue}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
-            <XAxis dataKey="month" stroke="#6B7280" fontSize={11} />
-            <YAxis stroke="#6B7280" fontSize={11} tickFormatter={(v) => `$${v / 1000}k`} />
-            <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }} formatter={(value) => [`$${Number(value ?? 0).toLocaleString()}`, '']} />
-            <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2.5} dot={{ fill: '#10b981', r: 4 }} name="Profit" />
-            <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={1.5} strokeDasharray="5 5" dot={false} name="Revenue" />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      <Suspense fallback={<Loader text="Loading chart..." />}>
+        <ProfitTrendChart data={monthlyRevenue} />
+      </Suspense>
     </div>
   );
 };

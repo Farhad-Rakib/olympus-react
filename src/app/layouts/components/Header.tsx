@@ -80,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4">
         <button
           onClick={onMenuClick}
           className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -88,7 +88,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <Menu className="w-6 h-6" />
         </button>
 
-        <div className="flex-1 lg:ml-0 ml-4" />
+        <div className="flex-1 lg:ml-0 ml-2 sm:ml-4" />
 
         <div className="flex items-center gap-1">
           <button
@@ -113,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-[min(20rem,calc(100vw-1rem))] sm:w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
                   {unreadCount > 0 && (
@@ -141,7 +141,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <div ref={userRef} className="relative ml-1">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               {user?.avatar ? (
                 <img src={user.avatar} alt={user.fullName} className="w-8 h-8 rounded-full object-cover" />
@@ -159,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
+              <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-1rem)] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
                 <button
                   onClick={() => { setShowUserMenu(false); navigate('/profile'); }}
                   className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

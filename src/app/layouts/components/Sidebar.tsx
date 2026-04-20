@@ -1,7 +1,17 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, X, Command } from 'lucide-react';
-import * as Icons from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  X,
+  Command,
+  LayoutDashboard,
+  Users,
+  Activity,
+  FileText,
+  Settings,
+  Sliders,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { menuApi } from '../../../core/api/services/menu.api';
 import { MenuItem } from '../../../domain/models/menu.model';
@@ -12,6 +22,15 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const iconMap = {
+  LayoutDashboard,
+  Users,
+  Activity,
+  FileText,
+  Settings,
+  Sliders,
+} as const;
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
@@ -31,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const getIcon = (iconName?: string) => {
     if (!iconName) return null;
-    const Icon = (Icons as any)[iconName];
+    const Icon = iconMap[iconName as keyof typeof iconMap];
     return Icon ? <Icon className="w-5 h-5" /> : null;
   };
 
@@ -128,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       )}
 
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-[85vw] max-w-72 sm:w-72 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         } flex flex-col`}
       >

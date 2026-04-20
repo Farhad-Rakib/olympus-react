@@ -81,7 +81,7 @@ export const CommandPalette: React.FC = () => {
   return (
     <div className="fixed inset-0 z-[100]">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
-      <div className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg">
+      <div className="fixed top-[12%] sm:top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg px-3 sm:px-0">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
             <Search className="w-5 h-5 text-gray-400 shrink-0" />
@@ -125,7 +125,7 @@ export const CommandPalette: React.FC = () => {
               ))
             )}
           </div>
-          <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 flex items-center gap-4 text-[10px] text-gray-400">
+          <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 hidden sm:flex items-center gap-4 text-[10px] text-gray-400">
             <span className="flex items-center gap-1"><kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded font-medium">↑↓</kbd> Navigate</span>
             <span className="flex items-center gap-1"><kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded font-medium">↵</kbd> Select</span>
             <span className="flex items-center gap-1"><kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded font-medium">Esc</kbd> Close</span>

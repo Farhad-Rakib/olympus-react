@@ -1,17 +1,51 @@
+import { Suspense, lazy, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AuthLayout } from '../layouts/AuthLayout';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { AuthGuard } from '../../core/guards/auth.guard';
 import { PermissionGuard } from '../../core/guards/permission.guard';
+import { Loader } from '../../components/ui/Loader/Loader';
 import { LoginPage } from '../../features/auth/pages/LoginPage';
-import { DashboardPage } from '../../features/dashboard/pages/DashboardPage';
-import { UsersPage } from '../../presentation/pages/UsersPage';
-import { ActivityLogPage } from '../../features/activity/pages/ActivityLogPage';
 import { PreferencesPage } from '../../features/preferences/pages/PreferencesPage';
-import { SettingsLayout } from '../../features/settings/pages/SettingsLayout';
-import { ReportsPage } from '../../features/reports/pages/ReportsPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { ForbiddenPage } from '../pages/ForbiddenPage';
+
+const DashboardPage = lazy(() =>
+  import('../../features/dashboard/pages/DashboardPage').then((m) => ({
+    default: m.DashboardPage,
+  }))
+);
+const UsersPage = lazy(() =>
+  import('../../presentation/pages/UsersPage').then((m) => ({
+    default: m.UsersPage,
+  }))
+);
+const ActivityLogPage = lazy(() =>
+  import('../../features/activity/pages/ActivityLogPage').then((m) => ({
+    default: m.ActivityLogPage,
+  }))
+);
+const ProfilePage = lazy(() =>
+  import('../../features/profile/pages/ProfilePage').then((m) => ({
+    default: m.ProfilePage,
+  }))
+);
+const SettingsLayout = lazy(() =>
+  import('../../features/settings/pages/SettingsLayout').then((m) => ({
+    default: m.SettingsLayout,
+  }))
+);
+const ReportsPage = lazy(() =>
+  import('../../features/reports/pages/ReportsPage').then((m) => ({
+    default: m.ReportsPage,
+  }))
+);
+
+const withSuspense = (element: ReactNode) => (
+  <Suspense fallback={<Loader text="Loading page..." />}>
+    {element}
+  </Suspense>
+);
 
 export const router = createBrowserRouter([
   {
@@ -40,7 +74,7 @@ export const router = createBrowserRouter([
         path: 'dashboard',
         element: (
           <PermissionGuard permissions={['dashboard.view']}>
-            <DashboardPage />
+            {withSuspense(<DashboardPage />)}
           </PermissionGuard>
         ),
       },
@@ -48,7 +82,7 @@ export const router = createBrowserRouter([
         path: 'users',
         element: (
           <PermissionGuard permissions={['users.view']}>
-            <UsersPage />
+            {withSuspense(<UsersPage />)}
           </PermissionGuard>
         ),
       },
@@ -56,7 +90,7 @@ export const router = createBrowserRouter([
         path: 'reports',
         element: (
           <PermissionGuard permissions={['reports.view']}>
-            <ReportsPage />
+            {withSuspense(<ReportsPage />)}
           </PermissionGuard>
         ),
       },
@@ -64,7 +98,7 @@ export const router = createBrowserRouter([
         path: 'activity',
         element: (
           <PermissionGuard permissions={['dashboard.view']}>
-            <ActivityLogPage />
+            {withSuspense(<ActivityLogPage />)}
           </PermissionGuard>
         ),
       },
@@ -73,10 +107,14 @@ export const router = createBrowserRouter([
         element: <PreferencesPage />,
       },
       {
+        path: 'profile',
+        element: withSuspense(<ProfilePage />),
+      },
+      {
         path: 'settings/general',
         element: (
           <PermissionGuard permissions={['settings.view']}>
-            <SettingsLayout initialTab="general" />
+            {withSuspense(<SettingsLayout initialTab="general" />)}
           </PermissionGuard>
         ),
       },
@@ -84,7 +122,7 @@ export const router = createBrowserRouter([
         path: 'settings/security',
         element: (
           <PermissionGuard permissions={['settings.view']}>
-            <SettingsLayout initialTab="security" />
+            {withSuspense(<SettingsLayout initialTab="security" />)}
           </PermissionGuard>
         ),
       },
@@ -92,7 +130,7 @@ export const router = createBrowserRouter([
         path: 'settings/notifications',
         element: (
           <PermissionGuard permissions={['settings.view']}>
-            <SettingsLayout initialTab="notifications" />
+            {withSuspense(<SettingsLayout initialTab="notifications" />)}
           </PermissionGuard>
         ),
       },

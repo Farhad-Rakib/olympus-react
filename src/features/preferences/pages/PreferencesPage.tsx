@@ -18,7 +18,7 @@ export const PreferencesPage: React.FC = () => {
   const { tableDensity, setTableDensity } = usePreferencesStore();
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl w-full">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Preferences</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-1">Customize your experience</p>
@@ -27,7 +27,7 @@ export const PreferencesPage: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Appearance</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Choose your preferred color theme</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {themeOptions.map((opt) => {
             const Icon = opt.icon;
             const active = theme === opt.value;
@@ -85,7 +85,8 @@ export const PreferencesPage: React.FC = () => {
         <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Preview</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">See how table density looks</p>
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700/50">
               <tr>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Name</th>
@@ -104,7 +105,8 @@ export const PreferencesPage: React.FC = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       </div>
     </div>
