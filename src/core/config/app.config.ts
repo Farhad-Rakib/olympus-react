@@ -1,5 +1,3 @@
-import { EnvConfig } from '../../infrastructure/config/env.config';
-
 export const AppConfig = {
   app: {
     name: 'Admin Template',
@@ -9,16 +7,14 @@ export const AppConfig = {
   },
 
   api: {
-    baseURL: EnvConfig.apiBaseUrl,
-    timeout: EnvConfig.requestTimeout,
-    withCredentials: false,
-    useMockData: EnvConfig.useMockApi,
-    mockDelay: 800,
+    baseURL: 'https://localhost:5001/api/v1',
+    timeout: 30000,
+    withCredentials: true,
   },
 
   auth: {
     tokenKey: 'admin_token',
-    userKey: 'admin_user',
+    refreshTokenKey: 'admin_refresh_token',
     storageType: 'localStorage' as 'localStorage' | 'sessionStorage',
     loginPath: '/login',
     defaultRedirect: '/dashboard',
@@ -52,12 +48,6 @@ export const AppConfig = {
     showRequiredIndicator: true,
     validateOnBlur: true,
     validateOnChange: false,
-  },
-
-  menu: {
-    loadFromJSON: true,
-    collapsible: true,
-    defaultCollapsed: false,
   },
 
   toast: {

@@ -1,19 +1,55 @@
-import { User } from '../models/user.model';
-
 export interface LoginRequestDto {
   email: string;
   password: string;
 }
 
+export interface ApiResponse<T> {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: T;
+  errors: string | null;
+  timestamp: string;
+}
+
+export interface LoginTokenData {
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAtUtc: string;
+  refreshTokenExpiresAtUtc: string;
+}
+
 export interface LoginResponseDto {
-  user: User;
-  token: string;
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAtUtc: string;
+  refreshTokenExpiresAtUtc: string;
 }
 
-export interface TokenVerifyResponseDto {
-  valid: boolean;
+export interface RefreshTokenRequestDto {
+  refreshToken: string;
 }
 
-export interface TokenRefreshResponseDto {
-  token: string;
+export interface RefreshTokenResponseDto {
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAtUtc: string;
+  refreshTokenExpiresAtUtc: string;
+}
+
+export interface RegisterRequestDto {
+  fullName: string;
+  email: string;
+  password: string;
+  roles: string[];
+}
+
+export interface RegisterResponseDto {
+  user: {
+    id: number;
+    fullName: string;
+    email: string;
+    isActive: boolean;
+    roles: string[];
+  };
 }

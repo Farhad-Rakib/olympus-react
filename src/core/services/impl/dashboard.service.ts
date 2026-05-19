@@ -4,7 +4,7 @@ import { IDashboardService } from '../dashboard.service.interface';
 
 export class DashboardService extends BaseRepository implements IDashboardService {
   constructor() {
-    super('/dashboard');
+    super('/Dashboard');
   }
 
   async getDashboardData(): Promise<GetDashboardResponseDto> {

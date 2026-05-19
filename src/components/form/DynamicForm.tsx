@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 
-export type FieldType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio';
+export type FieldType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file';
 
 export interface FormField {
   name: string;
@@ -203,13 +203,13 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     <form onSubmit={handleSubmit(onSubmit)} className={`space-y-6 ${className}`}>
       <div className="space-y-4">{fields.map(renderField)}</div>
 
-      <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -217,7 +217,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full sm:w-auto justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
         >
           {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
           {submitLabel}

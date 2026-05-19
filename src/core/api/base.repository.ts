@@ -10,6 +10,17 @@ export interface IBaseRepository {
   delete<T>(url: string, config?: HttpRequestConfig): Promise<T>;
 }
 
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) prom.reject(error);
+    else prom.resolve(token!);
+  });
+  failedQueue = [];
+};
+
 export class BaseRepository implements IBaseRepository {
   protected client: AxiosInstance;
   private basePath: string;
@@ -44,10 +55,52 @@ export class BaseRepository implements IBaseRepository {
     this.client.interceptors.response.use(
       (response) => response,
       async (error) => {
-        if (error.response?.status === 401 && !error.config._retry) {
-          error.config._retry = true;
-          this.handleAuthError();
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          if (isRefreshing) {
+            return new Promise((resolve, reject) => {
+              failedQueue.push({ resolve, reject });
+            }).then((token) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return this.client(originalRequest);
+            });
+          }
+
+          originalRequest._retry = true;
+          isRefreshing = true;
+
+          const refreshToken = this.getRefreshToken();
+          if (!refreshToken) {
+            this.handleAuthError();
+            return Promise.reject(error);
+          }
+
+          try {
+            const response = await axios.post(
+              `${AppConfig.api.baseURL}/Auth/refresh`,
+              { refreshToken },
+              { headers: { 'Content-Type': 'application/json' } }
+            );
+
+            const newAccessToken = response.data.data.accessToken;
+            const newRefreshToken = response.data.data.refreshToken;
+
+            this.setToken(newAccessToken);
+            this.setRefreshToken(newRefreshToken);
+
+            processQueue(null, newAccessToken);
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            return this.client(originalRequest);
+          } catch (refreshError) {
+            processQueue(refreshError, null);
+            this.handleAuthError();
+            return Promise.reject(refreshError);
+          } finally {
+            isRefreshing = false;
+          }
         }
+
         return Promise.reject(error);
       }
     );
@@ -55,13 +108,60 @@ export class BaseRepository implements IBaseRepository {
 
   private getToken(): string | null {
     const storage = AppConfig.auth.storageType === 'localStorage' ? localStorage : sessionStorage;
-    return storage.getItem(AppConfig.auth.tokenKey);
+    const raw = storage.getItem(AppConfig.auth.tokenKey);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed?.state?.accessToken || null;
+    } catch {
+      return raw;
+    }
+  }
+
+  private getRefreshToken(): string | null {
+    const storage = AppConfig.auth.storageType === 'localStorage' ? localStorage : sessionStorage;
+    const raw = storage.getItem(AppConfig.auth.tokenKey);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed?.state?.refreshToken || null;
+    } catch {
+      return storage.getItem(AppConfig.auth.refreshTokenKey);
+    }
+  }
+
+  private setToken(token: string): void {
+    const storage = AppConfig.auth.storageType === 'localStorage' ? localStorage : sessionStorage;
+    const raw = storage.getItem(AppConfig.auth.tokenKey);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      parsed.state.accessToken = token;
+      storage.setItem(AppConfig.auth.tokenKey, JSON.stringify(parsed));
+    } catch {
+      // noop
+    }
+  }
+
+  private setRefreshToken(token: string): void {
+    const storage = AppConfig.auth.storageType === 'localStorage' ? localStorage : sessionStorage;
+    const raw = storage.getItem(AppConfig.auth.tokenKey);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      parsed.state.refreshToken = token;
+      storage.setItem(AppConfig.auth.tokenKey, JSON.stringify(parsed));
+    } catch {
+      // noop
+    }
   }
 
   private handleAuthError(): void {
     const storage = AppConfig.auth.storageType === 'localStorage' ? localStorage : sessionStorage;
     storage.removeItem(AppConfig.auth.tokenKey);
-    window.location.href = AppConfig.auth.loginPath;
+    if (window.location.pathname !== AppConfig.auth.loginPath) {
+      window.location.href = AppConfig.auth.loginPath;
+    }
   }
 
   private buildUrl(url: string): string {

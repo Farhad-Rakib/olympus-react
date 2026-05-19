@@ -1,16 +1,27 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User } from '../../../domain/models/user.model';
 import { LoginRequestDto } from '../../../domain/dto/auth.dto';
 import { authApi } from '../../../core/api/services/auth.api';
+import { menuApi } from '../../../core/api/services/menu.api';
 import { AppConfig } from '../../../core/config/app.config';
+import { queryClient } from '../../../app/providers/AppProviders';
+
+interface TokenPayload {
+  sub?: string;
+  email?: string;
+  name?: string;
+  role?: string;
+  permissions?: string[];
+  [key: string]: any;
+}
 
 interface AuthState {
-  user: User | null;
-  token: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  tokenPayload: TokenPayload | null;
   login: (dto: LoginRequestDto) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -19,33 +30,54 @@ interface AuthState {
   hasAllPermissions: (permissions: string[]) => boolean;
 }
 
+function decodeJwtPayload(token: string): TokenPayload | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1]));
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      user: null,
-      token: null,
+      accessToken: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      tokenPayload: null,
 
       login: async (dto: LoginRequestDto) => {
         set({ isLoading: true, error: null });
         try {
           const response = await authApi.login(dto);
+          const payload = decodeJwtPayload(response.accessToken);
+
           set({
-            user: response.user,
-            token: response.token,
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
             isAuthenticated: true,
             isLoading: false,
             error: null,
+            tokenPayload: payload,
+          });
+
+          queryClient.prefetchQuery({
+            queryKey: ['menu'],
+            queryFn: () => menuApi.getMenuItems(),
           });
         } catch (error: any) {
+          const message = error?.response?.data?.message || error?.message || 'Login failed';
           set({
-            error: error.message || 'Login failed',
+            error: message,
             isLoading: false,
             isAuthenticated: false,
           });
-          throw error;
+          throw new Error(message);
         }
       },
 
@@ -56,42 +88,55 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           console.error('Logout error:', error);
         } finally {
+          queryClient.clear();
+
           set({
-            user: null,
-            token: null,
+            accessToken: null,
+            refreshToken: null,
             isAuthenticated: false,
             isLoading: false,
             error: null,
+            tokenPayload: null,
           });
+
+          const storage = AppConfig.auth.storageType === 'localStorage' ? localStorage : sessionStorage;
+          storage.removeItem(AppConfig.auth.tokenKey);
         }
       },
 
       clearError: () => set({ error: null }),
 
       hasPermission: (permission: string): boolean => {
-        const { user } = get();
-        if (!user) return false;
-        return user.permissions.includes(permission);
+        const { tokenPayload } = get();
+        if (!tokenPayload) return false;
+        const perms = tokenPayload.permissions || tokenPayload.permission || [];
+        if (Array.isArray(perms)) return perms.includes(permission);
+        return false;
       },
 
       hasAnyPermission: (permissions: string[]): boolean => {
-        const { user } = get();
-        if (!user) return false;
-        return permissions.some(permission => user.permissions.includes(permission));
+        const { tokenPayload } = get();
+        if (!tokenPayload) return false;
+        const perms: string[] = tokenPayload.permissions || tokenPayload.permission || [];
+        if (!Array.isArray(perms)) return false;
+        return permissions.some(p => perms.includes(p));
       },
 
       hasAllPermissions: (permissions: string[]): boolean => {
-        const { user } = get();
-        if (!user) return false;
-        return permissions.every(permission => user.permissions.includes(permission));
+        const { tokenPayload } = get();
+        if (!tokenPayload) return false;
+        const perms: string[] = tokenPayload.permissions || tokenPayload.permission || [];
+        if (!Array.isArray(perms)) return false;
+        return permissions.every(p => perms.includes(p));
       },
     }),
     {
       name: AppConfig.auth.tokenKey,
       partialize: (state) => ({
-        user: state.user,
-        token: state.token,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
+        tokenPayload: state.tokenPayload,
       }),
     }
   )

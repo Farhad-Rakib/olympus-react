@@ -1,1 +1,55 @@
-export { router } from '../routes';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { AuthLayout } from '../layouts/AuthLayout';
+import { DashboardLayout } from '../layouts/DashboardLayout';
+import { AuthGuard } from '../../core/guards/auth.guard';
+import { LoginPage } from '../../features/auth/pages/LoginPage';
+import { DashboardPage } from '../../features/dashboard/pages/DashboardPage';
+import { UsersPage } from '../../features/users/pages/UsersPage';
+import { RolesPage } from '../../features/roles/pages/RolesPage';
+import { PermissionsPage } from '../../features/permissions/pages/PermissionsPage';
+import { RolePermissionsPage } from '../../features/role-permissions/pages/RolePermissionsPage';
+import { UserRolesPage } from '../../features/user-roles/pages/UserRolesPage';
+import { MenuPage } from '../../features/menu/pages/MenuPage';
+import { ReportsPage } from '../../features/reports/pages/ReportsPage';
+import { PreferencesPage } from '../../features/preferences/pages/PreferencesPage';
+import { ProfilePage } from '../../features/profile/pages/ProfilePage';
+import { SiteSettingsPage } from '../../features/site-settings/pages/SiteSettingsPage';
+import { NotFoundPage } from '../pages/NotFoundPage';
+import { ForbiddenPage } from '../pages/ForbiddenPage';
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Navigate to="/dashboard" replace />,
+  },
+  {
+    path: '/',
+    element: <AuthLayout />,
+    children: [
+      { path: 'login', element: <LoginPage /> },
+    ],
+  },
+  {
+    path: '/',
+    element: (
+      <AuthGuard>
+        <DashboardLayout />
+      </AuthGuard>
+    ),
+    children: [
+      { path: 'dashboard', element: <DashboardPage /> },
+      { path: 'users', element: <UsersPage /> },
+      { path: 'roles', element: <RolesPage /> },
+      { path: 'permissions', element: <PermissionsPage /> },
+      { path: 'roles/permissions', element: <RolePermissionsPage /> },
+      { path: 'users/roles', element: <UserRolesPage /> },
+      { path: 'menu-management', element: <MenuPage /> },
+      { path: 'reports', element: <ReportsPage /> },
+      { path: 'preferences', element: <PreferencesPage /> },
+      { path: 'profile', element: <ProfilePage /> },
+      { path: 'site-settings', element: <SiteSettingsPage /> },
+    ],
+  },
+  { path: '/403', element: <ForbiddenPage /> },
+  { path: '*', element: <NotFoundPage /> },
+]);

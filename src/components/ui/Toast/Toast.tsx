@@ -28,7 +28,7 @@ export const ToastContainer: React.FC = () => {
   const { toasts, removeToast } = useToastStore();
 
   return (
-    <div className="fixed top-4 left-3 right-3 sm:left-auto sm:right-4 z-50 flex flex-col gap-2 w-auto sm:w-full sm:max-w-md">
+    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-md">
       {toasts.map((toast) => {
         const style = toastStyles[toast.type];
         return (

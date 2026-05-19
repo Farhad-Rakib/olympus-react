@@ -1,4 +1,5 @@
-import { UserRole, UserStatus } from '../models/user.model';
+import { UserRole, UserStatus, UserProfile } from '../models/user.model';
+import { ApiResponse } from './auth.dto';
 
 export interface GetUsersRequestDto {
   page?: number;
@@ -31,3 +32,6 @@ export interface UpdateUserRequestDto {
   avatar?: string;
   permissions?: string[];
 }
+
+export type GetUserProfileApiResponse = ApiResponse<UserProfile>;
+export type GetUserProfileResponseDto = UserProfile;

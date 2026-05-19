@@ -1,30 +1,10 @@
-import { lazy, Suspense, useState } from 'react';
-import { Download, TrendingUp, DollarSign, Users, ShoppingCart } from 'lucide-react';
-import { Loader } from '../../../components/ui/Loader/Loader';
-
-const RevenueExpensesChart = lazy(() =>
-  import('../components/RevenueExpensesChart').then((m) => ({
-    default: m.RevenueExpensesChart,
-  }))
-);
-
-const CategoryPieChart = lazy(() =>
-  import('../components/CategoryPieChart').then((m) => ({
-    default: m.CategoryPieChart,
-  }))
-);
-
-const WeeklyTrafficChart = lazy(() =>
-  import('../components/WeeklyTrafficChart').then((m) => ({
-    default: m.WeeklyTrafficChart,
-  }))
-);
-
-const ProfitTrendChart = lazy(() =>
-  import('../components/ProfitTrendChart').then((m) => ({
-    default: m.ProfitTrendChart,
-  }))
-);
+import { useState, useMemo } from 'react';
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area,
+} from 'recharts';
+import { Download, Calendar, TrendingUp, DollarSign, Users, ShoppingCart, Filter, FileText } from 'lucide-react';
+import { Autocomplete, AutocompleteOption } from '../../../components/ui/Autocomplete/Autocomplete';
 
 const monthlyRevenue = [
   { month: 'Jan', revenue: 42000, expenses: 28000, profit: 14000 },
@@ -74,8 +54,71 @@ const summaryCards = [
   { label: 'Growth Rate', value: '14.2%', change: '+3.8%', icon: TrendingUp, color: 'bg-rose-500' },
 ];
 
+const reportTypeOptions: AutocompleteOption[] = [
+  { label: 'Sales Report', value: 'sales' },
+  { label: 'Revenue Report', value: 'revenue' },
+  { label: 'Expense Report', value: 'expenses' },
+  { label: 'Profit & Loss', value: 'pnl' },
+  { label: 'Traffic Report', value: 'traffic' },
+  { label: 'Customer Report', value: 'customers' },
+  { label: 'Product Performance', value: 'products' },
+  { label: 'Inventory Report', value: 'inventory' },
+];
+
+const categoryOptions: AutocompleteOption[] = [
+  { label: 'All Categories', value: 'all' },
+  { label: 'Electronics', value: 'electronics' },
+  { label: 'Clothing', value: 'clothing' },
+  { label: 'Food & Drink', value: 'food' },
+  { label: 'Home & Garden', value: 'home' },
+  { label: 'Sports & Outdoors', value: 'sports' },
+  { label: 'Books & Media', value: 'books' },
+  { label: 'Health & Beauty', value: 'health' },
+];
+
+const regionOptions: AutocompleteOption[] = [
+  { label: 'All Regions', value: 'all' },
+  { label: 'North America', value: 'na' },
+  { label: 'Europe', value: 'eu' },
+  { label: 'Asia Pacific', value: 'apac' },
+  { label: 'Latin America', value: 'latam' },
+  { label: 'Middle East & Africa', value: 'mea' },
+];
+
+const statusOptions: AutocompleteOption[] = [
+  { label: 'All Status', value: 'all' },
+  { label: 'Completed', value: 'completed' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'Processing', value: 'processing' },
+  { label: 'Cancelled', value: 'cancelled' },
+  { label: 'Refunded', value: 'refunded' },
+];
+
 export const ReportsPage: React.FC = () => {
   const [period, setPeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [reportType, setReportType] = useState('');
+  const [category, setCategory] = useState('');
+  const [region, setRegion] = useState('');
+  const [status, setStatus] = useState('');
+  const [showFilters, setShowFilters] = useState(true);
+
+  const hasActiveFilters = useMemo(
+    () => dateFrom || dateTo || reportType || category || region || status,
+    [dateFrom, dateTo, reportType, category, region, status]
+  );
+
+  const clearFilters = () => {
+    setDateFrom('');
+    setDateTo('');
+    setReportType('');
+    setCategory('');
+    setRegion('');
+    setStatus('');
+  };
+
+  const inputCls = 'w-full px-3 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow';
 
   return (
     <div className="space-y-6">
@@ -100,12 +143,114 @@ export const ReportsPage: React.FC = () => {
               </button>
             ))}
           </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-3 py-2 text-sm border rounded-lg transition-colors ${
+              showFilters
+                ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            Filters
+            {hasActiveFilters && (
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
+            )}
+          </button>
           <button className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <Download className="w-4 h-4" /> Export
           </button>
         </div>
       </div>
 
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-gray-400" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Search & Filter</h3>
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Date From */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Date From</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+
+            {/* Date To */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Date To</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+
+            {/* Report Type */}
+            <Autocomplete
+              options={reportTypeOptions}
+              value={reportType}
+              onChange={setReportType}
+              placeholder="Select report type..."
+              label="Report Type"
+            />
+
+            {/* Category */}
+            <Autocomplete
+              options={categoryOptions}
+              value={category}
+              onChange={setCategory}
+              placeholder="Select category..."
+              label="Category"
+            />
+
+            {/* Region */}
+            <Autocomplete
+              options={regionOptions}
+              value={region}
+              onChange={setRegion}
+              placeholder="Select region..."
+              label="Region"
+            />
+
+            {/* Status */}
+            <Autocomplete
+              options={statusOptions}
+              value={status}
+              onChange={setStatus}
+              placeholder="Select status..."
+              label="Status"
+            />
+          </div>
+
+          <div className="flex justify-end mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+              <Filter className="w-4 h-4" />
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((card) => {
           const Icon = card.icon;
@@ -127,20 +272,72 @@ export const ReportsPage: React.FC = () => {
         })}
       </div>
 
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Suspense fallback={<Loader text="Loading chart..." />}>
-          <RevenueExpensesChart data={monthlyRevenue} />
-        </Suspense>
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Revenue & Expenses</h3>
+            <div className="flex items-center gap-1 text-xs text-gray-400">
+              <Calendar className="w-3.5 h-3.5" /> {dateFrom && dateTo ? `${dateFrom} - ${dateTo}` : '2024'}
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={monthlyRevenue} barGap={2}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
+              <XAxis dataKey="month" stroke="#6B7280" fontSize={11} />
+              <YAxis stroke="#6B7280" fontSize={11} tickFormatter={(v) => `$${v / 1000}k`} />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                formatter={(value) => [`$${Number(value).toLocaleString()}`, '']}
+              />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Revenue" />
+              <Bar dataKey="expenses" fill="#ef4444" radius={[4, 4, 0, 0]} name="Expenses" opacity={0.7} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-        <Suspense fallback={<Loader text="Loading chart..." />}>
-          <CategoryPieChart data={categoryData} />
-        </Suspense>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Sales by Category</h3>
+          <ResponsiveContainer width="100%" height={240}>
+            <PieChart>
+              <Pie data={categoryData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value">
+                {categoryData.map((entry) => (
+                  <Cell key={entry.name} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }} formatter={(value) => [`${value}%`, '']} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="space-y-2 mt-2">
+            {categoryData.map((cat) => (
+              <div key={cat.name} className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
+                  <span className="text-gray-700 dark:text-gray-300">{cat.name}</span>
+                </div>
+                <span className="font-medium text-gray-900 dark:text-white">{cat.value}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Suspense fallback={<Loader text="Loading chart..." />}>
-          <WeeklyTrafficChart data={weeklyTraffic} />
-        </Suspense>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Weekly Traffic</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={weeklyTraffic}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
+              <XAxis dataKey="day" stroke="#6B7280" fontSize={11} />
+              <YAxis stroke="#6B7280" fontSize={11} />
+              <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }} />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              <Area type="monotone" dataKey="visitors" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.15} name="Visitors" />
+              <Area type="monotone" dataKey="pageViews" stroke="#10b981" fill="#10b981" fillOpacity={0.1} name="Page Views" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Top Products</h3>
@@ -173,9 +370,20 @@ export const ReportsPage: React.FC = () => {
         </div>
       </div>
 
-      <Suspense fallback={<Loader text="Loading chart..." />}>
-        <ProfitTrendChart data={monthlyRevenue} />
-      </Suspense>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Profit Trend</h3>
+        <ResponsiveContainer width="100%" height={280}>
+          <LineChart data={monthlyRevenue}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
+            <XAxis dataKey="month" stroke="#6B7280" fontSize={11} />
+            <YAxis stroke="#6B7280" fontSize={11} tickFormatter={(v) => `$${v / 1000}k`} />
+            <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }} formatter={(value) => [`$${Number(value).toLocaleString()}`, '']} />
+            <Legend wrapperStyle={{ fontSize: '12px' }} />
+            <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2.5} dot={{ fill: '#10b981', r: 4 }} name="Profit" />
+            <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={1.5} strokeDasharray="5 5" dot={false} name="Revenue" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };

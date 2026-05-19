@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Menu, LogOut, User, Settings, Sun, Moon, Bell, Check, Trash2 } from 'lucide-react';
+import { Menu, LogOut, User, Sun, Moon, Bell, Check, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../../features/auth/store/auth.store';
 import { useThemeStore } from '../../../core/stores/theme.store';
 import { useNotificationStore, Notification } from '../../../core/stores/notification.store';
+import { userApi } from '../../../core/api/services/user.api';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -56,13 +58,29 @@ const NotificationItem: React.FC<{
 
 export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { isAuthenticated, tokenPayload, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification } = useNotificationStore();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
+
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: () => userApi.getMe(),
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const displayName = profile?.fullName || tokenPayload?.name || tokenPayload?.email || 'User';
+  const displayRole = profile?.roles?.[0] || tokenPayload?.role || tokenPayload?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || '';
+  const initials = displayName
+    .split(' ')
+    .map((p: string) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -80,7 +98,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
-      <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4">
+      <div className="flex items-center justify-between px-4 py-3">
         <button
           onClick={onMenuClick}
           className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -88,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <Menu className="w-6 h-6" />
         </button>
 
-        <div className="flex-1 lg:ml-0 ml-2 sm:ml-4" />
+        <div className="flex-1 lg:ml-0 ml-4" />
 
         <div className="flex items-center gap-1">
           <button
@@ -113,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-[min(20rem,calc(100vw-1rem))] sm:w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
                   {unreadCount > 0 && (
@@ -141,36 +159,28 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <div ref={userRef} className="relative ml-1">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
-              {user?.avatar ? (
-                <img src={user.avatar} alt={user.fullName} className="w-8 h-8 rounded-full object-cover" />
+              {profile?.profileImageUrl ? (
+                <img src={profile.profileImageUrl} alt={displayName} className="w-8 h-8 rounded-full object-cover" />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">
-                    {user?.firstName?.[0]}{user?.lastName?.[0]}
-                  </span>
+                  <span className="text-white text-sm font-medium">{initials}</span>
                 </div>
               )}
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.fullName}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{displayName}</p>
+                {displayRole && <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{displayRole}</p>}
               </div>
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-1rem)] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
                 <button
                   onClick={() => { setShowUserMenu(false); navigate('/profile'); }}
                   className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
                   <User className="w-4 h-4" /> Profile
-                </button>
-                <button
-                  onClick={() => { setShowUserMenu(false); navigate('/settings/general'); }}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <Settings className="w-4 h-4" /> Settings
                 </button>
                 <hr className="my-1 border-gray-200 dark:border-gray-700" />
                 <button

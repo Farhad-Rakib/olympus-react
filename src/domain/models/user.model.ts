@@ -23,3 +23,12 @@ export interface User {
   createdAt: string;
   lastLogin?: string;
 }
+
+export interface UserProfile {
+  id: number;
+  fullName: string;
+  email: string;
+  isActive: boolean;
+  profileImageUrl: string | null;
+  roles: string[];
+}

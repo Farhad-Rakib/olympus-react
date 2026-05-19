@@ -3,6 +3,7 @@ import { Search, ChevronDown, ChevronUp, ChevronsUpDown, Plus } from 'lucide-rea
 import { Loader } from '../ui/Loader/Loader';
 import { EmptyState } from '../ui/EmptyState/EmptyState';
 import { ErrorState } from '../ui/ErrorState/ErrorState';
+import { Autocomplete, AutocompleteOption } from '../ui/Autocomplete/Autocomplete';
 
 export interface RowAction<T> {
   icon: React.ComponentType<{ className?: string }>;
@@ -28,6 +29,7 @@ interface DataTableProps<T> {
   searchable?: boolean;
   searchPlaceholder?: string;
   onSearch?: (term: string) => void;
+  searchOptions?: AutocompleteOption[];
   sortable?: boolean;
   onSort?: (key: keyof T, order: 'asc' | 'desc') => void;
   pagination?: {
@@ -60,6 +62,7 @@ export function DataTable<T extends Record<string, any>>({
   searchable = true,
   searchPlaceholder = 'Search...',
   onSearch,
+  searchOptions,
   sortable = true,
   onSort,
   pagination,
@@ -105,24 +108,37 @@ export function DataTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex items-center justify-between gap-4">
         {searchable && (
-          <div className="relative w-full sm:flex-1 sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder={searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="flex-1 max-w-md">
+            {searchOptions ? (
+              <Autocomplete
+                options={searchOptions}
+                value={searchTerm}
+                onChange={(val) => handleSearch(val)}
+                placeholder={searchPlaceholder}
+                onSearch={(q) => handleSearch(q)}
+                clearable
+              />
+            ) : (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder={searchPlaceholder}
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
           </div>
         )}
 
         {actions?.add && (
           <button
             onClick={actions.add.onClick}
-            className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
             {actions.add.label}
@@ -132,13 +148,13 @@ export function DataTable<T extends Record<string, any>>({
 
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px]">
+          <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <tr>
                 {columns.map((column) => (
                   <th
                     key={String(column.key)}
-                    className={`px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider ${
+                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider ${
                       column.sortable !== false && sortable
                         ? 'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700'
                         : ''
@@ -155,7 +171,7 @@ export function DataTable<T extends Record<string, any>>({
                   </th>
                 ))}
                 {rowActions && rowActions.length > 0 && (
-                  <th className="px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
                   </th>
                 )}
@@ -186,7 +202,7 @@ export function DataTable<T extends Record<string, any>>({
                     {columns.map((column) => (
                       <td
                         key={String(column.key)}
-                        className="px-4 py-4 sm:px-6 text-sm text-gray-900 dark:text-gray-100"
+                        className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100"
                       >
                         {column.render
                           ? column.render(row[column.key as keyof T], row)
@@ -194,7 +210,7 @@ export function DataTable<T extends Record<string, any>>({
                       </td>
                     ))}
                     {rowActions && rowActions.length > 0 && (
-                      <td className="px-4 py-4 sm:px-6 text-sm">
+                      <td className="px-6 py-4 text-sm">
                         <div className="flex items-center gap-2">
                           {rowActions
                             .filter((action) => !action.show || action.show(row))
@@ -232,7 +248,7 @@ export function DataTable<T extends Record<string, any>>({
       </div>
 
       {pagination && data.length > 0 && (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-700 dark:text-gray-300">Rows per page:</span>
             <select
@@ -248,8 +264,8 @@ export function DataTable<T extends Record<string, any>>({
             </select>
           </div>
 
-          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-            <span className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700 dark:text-gray-300">
               Page {pagination.currentPage} of {pagination.totalPages} ({pagination.total} total)
             </span>
             <div className="flex gap-1">
