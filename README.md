@@ -1,119 +1,150 @@
-# React Clean Architecture Template
+# Admin Template Starter Kit
 
-Reusable React + TypeScript boilerplate for production apps with strict separation of concerns.
+A production-ready, reusable Admin Template built with React, TypeScript, and modern best practices. This template is designed to be completely frontend-only with a mock-driven architecture, making it easy to develop without a backend and seamlessly switch to a real API when ready.
+
+## Features
+
+- **Modern Stack**: React 18, TypeScript, Vite, Tailwind CSS
+- **State Management**: Zustand (global) + TanStack Query (server state)
+- **Routing**: React Router with route guards
+- **Forms**: React Hook Form + Zod validation
+- **UI Components**: Reusable Table, Form, Toast, Loader, Dialog, etc.
+- **Mock System**: Complete mock data and services with simulated delays
+- **Authentication**: JWT-based auth with RBAC
+- **Charts**: Beautiful charts with Recharts
+- **Icons**: Lucide React icon library
+- **Responsive**: Mobile-first design with collapsible sidebar
 
 ## Quick Start
-
-1. Copy env file and update API URL:
-
-```bash
-cp .env.example .env
-```
-
-2. Install and run:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Default dev URL: http://localhost:5173
+Open [http://localhost:5173](http://localhost:5173)
 
-## Environment Configuration
+## Demo Accounts
 
-Set values in `.env`:
+- **Admin**: admin@example.com / admin123
+- **Manager**: manager@example.com / manager123
+- **User**: user@example.com / user123
 
-```env
-VITE_API_BASE_URL=http://localhost:5000
-VITE_USE_MOCK_API=true
-VITE_API_TIMEOUT_MS=30000
+## Project Structure
+
 ```
-
-- `VITE_API_BASE_URL`: Base URL for all API requests
-- `VITE_USE_MOCK_API`: `true` to use local mock services, `false` for backend API
-- `VITE_API_TIMEOUT_MS`: HTTP request timeout
-
-## Clean Architecture Layers
-
-- `presentation`: Pages, components, layouts, hooks (no direct API calls)
-- `application`: Use-cases and application services (business orchestration)
-- `domain`: Models, types, interfaces (pure contracts)
-- `infrastructure`: API clients, repository implementations, env/config
-
-## Source Structure
-
-```text
 src/
-  app/
-    routes/
-    providers/
-    store/
-    config/
-  presentation/
-    pages/
-    components/
-    layouts/
-    hooks/
-  application/
-    use-cases/
-    services/
-  domain/
-    models/
-    types/
-    interfaces/
-  infrastructure/
-    api/
-    repositories/
-    config/
-  shared/
-    utils/
-    constants/
-    hooks/
-  assets/
+├── app/              # Application level (layouts, router, providers)
+├── components/       # Shared components (table, form, ui)
+├── core/            # Core (api, config, guards, utils)
+├── domain/          # Domain models
+├── features/        # Feature modules (auth, dashboard, users)
+└── mocks/           # Mock data and services
 ```
 
-## Implemented Core Features
+## Key Features
 
-- Centralized Axios client with interceptors
-- API error normalization and global handling path
-- Env-based configuration (`.env`)
-- Repository pattern with domain contracts
-- React Query global provider setup
-- React Router protected route structure
-- Reusable layout system (`AuthLayout`, `DashboardLayout`)
-- Full User reference module across all layers
+### 1. Global Configuration
 
-## User Module Reference
+Central configuration in `src/core/config/app.config.ts`:
 
-Follow this chain for every new feature:
+```typescript
+export const AppConfig = {
+  api: {
+    useMockData: true,  // Toggle mock/real API
+    baseURL: '...',
+    mockDelay: 800,
+  },
+  // ... more config
+}
+```
 
-1. Domain contract: `src/domain/interfaces/user.repository.interface.ts`
-2. Infrastructure API: `src/infrastructure/api/user.api.ts`
-3. Infrastructure repository: `src/infrastructure/repositories/user.repository.impl.ts`
-4. Application use-cases/service: `src/application/use-cases/users/*` + `src/application/services/user.application.service.ts`
-5. Presentation hook: `src/presentation/hooks/useUsersPage.ts`
-6. Presentation page: `src/presentation/pages/UsersPage.tsx`
+### 2. Generic DataTable
 
-## Add New Feature (Checklist)
+Config-driven table with:
+- Sorting
+- Search
+- Pagination
+- Custom renderers
+- Loading/empty/error states
 
-1. Create model/types/interfaces in `src/domain`
-2. Add API + repository implementation in `src/infrastructure`
-3. Add use-cases/service in `src/application`
-4. Add page hook in `src/presentation/hooks`
-5. Add page/component in `src/presentation/pages`
-6. Register route in `src/app/routes/index.tsx`
+### 3. Dynamic Form
+
+Config-driven forms with:
+- Multiple field types
+- Zod validation
+- Custom styling
+- Loading states
+
+### 4. Authentication & RBAC
+
+- JWT token management
+- Route guards
+- Permission-based access
+- Persistent sessions
+
+### 5. Mock System
+
+Complete mock implementation:
+- JSON data files
+- Mock services with delays
+- Full CRUD operations
+- Easy to switch to real API
+
+## Documentation
+
+See [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for:
+- Detailed setup instructions
+- Folder structure explanation
+- Adding new features
+- Using components
+- Authentication flow
+- Menu system
+- Switching to real backend
+- Best practices
+- Common mistakes
+
+## Tech Stack
+
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool & dev server
+- **Tailwind CSS** - Utility-first CSS
+- **Zustand** - State management
+- **TanStack Query** - Server state & caching
+- **React Router** - Client-side routing
+- **React Hook Form** - Form handling
+- **Zod** - Schema validation
+- **Axios** - HTTP client
+- **Recharts** - Charts library
+- **Lucide React** - Icon library
 
 ## Scripts
 
 ```bash
-npm run dev
-npm run build
-npm run preview
-npm run lint
-npm run typecheck
+npm run dev        # Start dev server
+npm run build      # Build for production
+npm run preview    # Preview production build
+npm run lint       # Lint code
+npm run typecheck  # Type check
 ```
 
-## Developer Docs
+## Switching to Real Backend
 
-- Template usage: [TEMPLATE_USAGE.md](./TEMPLATE_USAGE.md)
-- Existing guide: [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)
+1. Update `AppConfig`:
+   ```typescript
+   api: {
+     useMockData: false,
+     baseURL: 'https://your-api.com',
+   }
+   ```
+
+2. All API services already support both mock and real endpoints
+
+3. Update token management if needed
+
+See [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for detailed instructions.
+
+## License
+
+MIT
