@@ -7,6 +7,7 @@ import { ApiResponse } from '../../../domain/dto/auth.dto';
 import { ConfirmDialog } from '../../../components/ui/Dialog/ConfirmDialog';
 import { Modal } from '../../../components/ui/Modal/Modal';
 import { DynamicForm, FormField } from '../../../components/form/DynamicForm';
+import { getErrorMessage } from '../../../core/api/api-error';
 
 interface RoleDto {
   id: number;
@@ -93,7 +94,7 @@ export const RolePermissionsPage: React.FC = () => {
       toast.success('Permission added to role');
       setShowAddModal(false);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to add permission'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to add permission')),
   });
 
   const removeMutation = useMutation({
@@ -105,7 +106,7 @@ export const RolePermissionsPage: React.FC = () => {
       toast.success('Permission removed from role');
       setRemoveTarget(null);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to remove permission'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to remove permission')),
   });
 
   const assignedIds = new Set(rolePermissions.map(p => p.id));
@@ -214,7 +215,7 @@ export const RolePermissionsPage: React.FC = () => {
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add Permission to Role" size="md">
         <DynamicForm
           fields={addFields}
-          onSubmit={(data) => addMutation.mutate({ roleId: selectedRoleId!, permissionId: Number(data.permissionId) })}
+          onSubmit={(data) => addMutation.mutateAsync({ roleId: selectedRoleId!, permissionId: Number(data.permissionId) })}
           submitLabel="Add Permission"
           onCancel={() => setShowAddModal(false)}
           isLoading={addMutation.isPending}

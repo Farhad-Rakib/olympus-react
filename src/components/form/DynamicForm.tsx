@@ -2,6 +2,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
+import { getFieldErrors } from '../../core/api/api-error';
 
 export type FieldType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file';
 
@@ -20,7 +21,11 @@ export interface FormField {
 
 interface DynamicFormProps {
   fields: FormField[];
-  onSubmit: (data: any) => void | Promise<void>;
+  /**
+   * Return the API promise (e.g. `mutation.mutateAsync(...)`) to have server-side
+   * validation errors shown next to the matching fields.
+   */
+  onSubmit: (data: any) => unknown;
   submitLabel?: string;
   cancelLabel?: string;
   onCancel?: () => void;
@@ -72,11 +77,28 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   const {
     control,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<Record<string, any>>({
     resolver: zodResolver(schema) as any,
     defaultValues,
   });
+
+  const submit = async (data: Record<string, unknown>) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      // The caller is responsible for showing the general error (e.g. a toast);
+      // here we only attach field-level messages to inputs this form renders.
+      const fieldErrors = getFieldErrors(error);
+      fields.forEach((field) => {
+        const messages = fieldErrors[field.name];
+        if (messages?.length) {
+          setError(field.name, { type: 'server', message: messages.join(' ') });
+        }
+      });
+    }
+  };
 
   const renderField = (field: FormField) => {
     const error = errors[field.name];
@@ -200,7 +222,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className={`space-y-6 ${className}`}>
+    <form onSubmit={handleSubmit(submit)} className={`space-y-6 ${className}`}>
       <div className="space-y-4">{fields.map(renderField)}</div>
 
       <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">

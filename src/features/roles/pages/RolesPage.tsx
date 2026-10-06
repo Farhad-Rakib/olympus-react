@@ -8,6 +8,7 @@ import { DynamicForm, FormField } from '../../../components/form/DynamicForm';
 import { toast } from '../../../components/ui/Toast/toast.store';
 import { BaseRepository } from '../../../core/api/base.repository';
 import { ApiResponse } from '../../../domain/dto/auth.dto';
+import { getErrorMessage } from '../../../core/api/api-error';
 
 interface RoleDto {
   id: number;
@@ -58,7 +59,7 @@ export const RolesPage: React.FC = () => {
       toast.success('Role created successfully');
       setShowAddModal(false);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to create role'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to create role')),
   });
 
   const updateMutation = useMutation({
@@ -68,7 +69,7 @@ export const RolesPage: React.FC = () => {
       toast.success('Role updated successfully');
       setEditRole(null);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to update role'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to update role')),
   });
 
   const deleteMutation = useMutation({
@@ -78,7 +79,7 @@ export const RolesPage: React.FC = () => {
       toast.success('Role deleted successfully');
       setDeleteRoleId(null);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to delete role'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete role')),
   });
 
   const columns: Column<RoleDto>[] = [
@@ -143,7 +144,7 @@ export const RolesPage: React.FC = () => {
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Role" size="md">
         <DynamicForm
           fields={createFields}
-          onSubmit={(data) => createMutation.mutate({ name: data.name, description: data.description || '' })}
+          onSubmit={(data) => createMutation.mutateAsync({ name: data.name, description: data.description || '' })}
           submitLabel="Create Role"
           onCancel={() => setShowAddModal(false)}
           isLoading={createMutation.isPending}
@@ -155,7 +156,7 @@ export const RolesPage: React.FC = () => {
           <DynamicForm
             key={editRole.id}
             fields={editFields}
-            onSubmit={(data) => updateMutation.mutate({ id: editRole.id, dto: { name: data.name, description: data.description || '' } })}
+            onSubmit={(data) => updateMutation.mutateAsync({ id: editRole.id, dto: { name: data.name, description: data.description || '' } })}
             submitLabel="Update Role"
             onCancel={() => setEditRole(null)}
             isLoading={updateMutation.isPending}

@@ -8,6 +8,7 @@ import { DynamicForm, FormField } from '../../../components/form/DynamicForm';
 import { toast } from '../../../components/ui/Toast/toast.store';
 import { BaseRepository } from '../../../core/api/base.repository';
 import { ApiResponse } from '../../../domain/dto/auth.dto';
+import { getErrorMessage } from '../../../core/api/api-error';
 
 interface UserDto {
   id: number;
@@ -88,7 +89,7 @@ export const UsersPage: React.FC = () => {
       toast.success('User created successfully');
       setShowAddModal(false);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to create user'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to create user')),
   });
 
   const updateRolesMutation = useMutation({
@@ -99,7 +100,7 @@ export const UsersPage: React.FC = () => {
       toast.success('User roles updated');
       setEditUser(null);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to update roles'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to update roles')),
   });
 
   const getStatusBadge = (isActive: boolean) => (

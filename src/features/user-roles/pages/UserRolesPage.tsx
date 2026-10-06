@@ -7,6 +7,7 @@ import { ApiResponse } from '../../../domain/dto/auth.dto';
 import { ConfirmDialog } from '../../../components/ui/Dialog/ConfirmDialog';
 import { Modal } from '../../../components/ui/Modal/Modal';
 import { DynamicForm, FormField } from '../../../components/form/DynamicForm';
+import { getErrorMessage } from '../../../core/api/api-error';
 
 interface UserDto {
   id: number;
@@ -89,7 +90,7 @@ export const UserRolesPage: React.FC = () => {
       toast.success('Role added to user');
       setShowAddModal(false);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to add role'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to add role')),
   });
 
   const removeMutation = useMutation({
@@ -101,7 +102,7 @@ export const UserRolesPage: React.FC = () => {
       toast.success('Role removed from user');
       setRemoveTarget(null);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to remove role'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to remove role')),
   });
 
   const assignedIds = new Set(userRoles.map(r => r.id));
@@ -216,7 +217,7 @@ export const UserRolesPage: React.FC = () => {
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add Role to User" size="md">
         <DynamicForm
           fields={addFields}
-          onSubmit={(data) => addMutation.mutate({ userId: selectedUserId!, roleId: Number(data.roleId) })}
+          onSubmit={(data) => addMutation.mutateAsync({ userId: selectedUserId!, roleId: Number(data.roleId) })}
           submitLabel="Add Role"
           onCancel={() => setShowAddModal(false)}
           isLoading={addMutation.isPending}

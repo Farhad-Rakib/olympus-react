@@ -8,6 +8,7 @@ import { DynamicForm, FormField } from '../../../components/form/DynamicForm';
 import { toast } from '../../../components/ui/Toast/toast.store';
 import { BaseRepository } from '../../../core/api/base.repository';
 import { ApiResponse } from '../../../domain/dto/auth.dto';
+import { getErrorMessage } from '../../../core/api/api-error';
 
 interface MenuDto {
   id: number;
@@ -96,7 +97,7 @@ export const MenuPage: React.FC = () => {
       toast.success('Menu item created successfully');
       setShowAddModal(false);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to create menu item'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to create menu item')),
   });
 
   const updateMutation = useMutation({
@@ -107,7 +108,7 @@ export const MenuPage: React.FC = () => {
       toast.success('Menu item updated successfully');
       setEditItem(null);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to update menu item'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to update menu item')),
   });
 
   const deleteMutation = useMutation({
@@ -118,7 +119,7 @@ export const MenuPage: React.FC = () => {
       toast.success('Menu item deleted successfully');
       setDeleteId(null);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to delete menu item'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete menu item')),
   });
 
   const columns: Column<MenuDto>[] = [

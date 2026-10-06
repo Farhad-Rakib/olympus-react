@@ -6,6 +6,7 @@ import { toast } from '../../../components/ui/Toast/toast.store';
 import { useSiteSettingsStore } from '../../../core/stores/site-settings.store';
 import { ConfirmDialog } from '../../../components/ui/Dialog/ConfirmDialog';
 import { Modal } from '../../../components/ui/Modal/Modal';
+import { getErrorMessage } from '../../../core/api/api-error';
 
 const SIDEBAR_PALETTE_KEY = 'sidebar';
 
@@ -65,7 +66,7 @@ export const SiteSettingsPage: React.FC = () => {
       setShowAddModal(false);
       setFormData({ key: '', value: '', description: '' });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to create setting'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to create setting')),
   });
 
   const updateMutation = useMutation({
@@ -77,7 +78,7 @@ export const SiteSettingsPage: React.FC = () => {
       setEditItem(null);
       setFormData({ key: '', value: '', description: '' });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to update setting'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to update setting')),
   });
 
   const deleteMutation = useMutation({
@@ -88,7 +89,7 @@ export const SiteSettingsPage: React.FC = () => {
       toast.success('Setting deleted');
       setDeleteId(null);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to delete setting'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete setting')),
   });
 
   const savePaletteMutation = useMutation({
@@ -99,7 +100,7 @@ export const SiteSettingsPage: React.FC = () => {
       setSidebarColors(paletteColors);
       toast.success('Sidebar color palette saved');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err.message || 'Failed to save palette'),
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to save palette')),
   });
 
   const handleSavePalette = () => {
