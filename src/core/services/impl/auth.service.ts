@@ -1,6 +1,13 @@
 import { BaseRepository } from '../../api/base.repository';
 import { LoginRequestDto, LoginResponseDto, RefreshTokenResponseDto, RegisterRequestDto, RegisterResponseDto, ApiResponse } from '../../../domain/dto/auth.dto';
 import { IAuthService } from '../auth.service.interface';
+import { AppConfig } from '../../config/app.config';
+import {
+  ExternalProviderDto,
+  ExternalProviderStatusDto,
+  GetExternalProviderStatusesApiResponse,
+  GetExternalProvidersApiResponse,
+} from '../../../domain/dto/external-auth.dto';
 
 export interface ForgotPasswordRequestDto {
   email: string;
@@ -33,8 +40,10 @@ export class AuthService extends BaseRepository implements IAuthService {
     return response.data;
   }
 
-  async logout(): Promise<void> {
-    // No backend logout endpoint -- handled locally by clearing the store
+  async logout(refreshToken?: string | null): Promise<void> {
+    // Revoke the refresh token server-side so it cannot be reused after logout.
+    if (!refreshToken) return;
+    await this.post('/revoke-refresh', { refreshToken });
   }
 
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponseDto> {
@@ -54,9 +63,34 @@ export class AuthService extends BaseRepository implements IAuthService {
   }
 
   async changePassword(dto: ChangePasswordRequestDto): Promise<void> {
-    const response = await this.post<ApiResponse<any>>('/change-password', dto);
+    const response = await this.post<ApiResponse<unknown>>('/change-password', dto);
     if (!response.success) {
       throw new Error(response.message || 'Failed to change password');
     }
+  }
+
+  async getExternalProviders(): Promise<ExternalProviderDto[]> {
+    const response = await this.get<GetExternalProvidersApiResponse>('/providers');
+    return response.success ? response.data : [];
+  }
+
+  async getExternalProviderStatuses(): Promise<ExternalProviderStatusDto[]> {
+    const response = await this.get<GetExternalProviderStatusesApiResponse>('/providers/status');
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to load sign-in methods');
+    }
+    return response.data;
+  }
+
+  getExternalStartUrl(providerId: string, returnUrl: string): string {
+    return `${AppConfig.api.baseURL}/Auth/external/${encodeURIComponent(providerId)}/start?returnUrl=${encodeURIComponent(returnUrl)}`;
+  }
+
+  async exchangeExternalCode(code: string): Promise<LoginResponseDto> {
+    const response = await this.post<ApiResponse<LoginResponseDto>>('/external/exchange', { code });
+    if (!response.success) {
+      throw new Error(response.message || 'Sign-in failed');
+    }
+    return response.data;
   }
 }

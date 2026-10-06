@@ -1,10 +1,12 @@
 import { create } from 'zustand';
+import { notificationApi } from '../api/services/notification.api';
+import { NotificationDto, NotificationType } from '../../domain/dto/notification.dto';
 
 export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: NotificationType;
   read: boolean;
   timestamp: string;
 }
@@ -12,91 +14,76 @@ export interface Notification {
 interface NotificationState {
   notifications: Notification[];
   unreadCount: number;
-  addNotification: (n: Omit<Notification, 'id' | 'read' | 'timestamp'>) => void;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  removeNotification: (id: string) => void;
+  /** Replaces the list with the signed-in user's notifications from the API. */
+  load: () => Promise<void>;
+  /** Adds a notification pushed over the hub (ignored if already present). */
+  receive: (dto: NotificationDto) => void;
+  markAsRead: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  removeNotification: (id: string) => Promise<void>;
   clearAll: () => void;
 }
 
-const INITIAL_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    title: 'New user registered',
-    message: 'Emma Wilson has created a new account',
-    type: 'info',
-    read: false,
-    timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-  },
-  {
-    id: '2',
-    title: 'Server alert',
-    message: 'CPU usage exceeded 90% threshold',
-    type: 'warning',
-    read: false,
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-  },
-  {
-    id: '3',
-    title: 'Deployment successful',
-    message: 'v2.1.0 deployed to production',
-    type: 'success',
-    read: false,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-  {
-    id: '4',
-    title: 'Payment failed',
-    message: 'Invoice #1234 payment was declined',
-    type: 'error',
-    read: true,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-  },
-];
+const toNotification = (dto: NotificationDto): Notification => ({
+  id: String(dto.id),
+  title: dto.title,
+  message: dto.message,
+  type: dto.type,
+  read: dto.isRead,
+  timestamp: dto.createdAt,
+});
 
-export const useNotificationStore = create<NotificationState>((set, get) => ({
-  notifications: INITIAL_NOTIFICATIONS,
-  unreadCount: INITIAL_NOTIFICATIONS.filter((n) => !n.read).length,
+const countUnread = (notifications: Notification[]) => notifications.filter((n) => !n.read).length;
 
-  addNotification: (n) => {
-    const notification: Notification = {
-      ...n,
-      id: `notif-${Date.now()}`,
-      read: false,
-      timestamp: new Date().toISOString(),
-    };
-    set((s) => ({
-      notifications: [notification, ...s.notifications],
-      unreadCount: s.unreadCount + 1,
-    }));
-  },
+export const useNotificationStore = create<NotificationState>((set, get) => {
+  // Apply a change locally right away; reload from the API if the server rejects it.
+  const optimistic = async (update: (list: Notification[]) => Notification[], request: () => Promise<void>) => {
+    const next = update(get().notifications);
+    set({ notifications: next, unreadCount: countUnread(next) });
+    try {
+      await request();
+    } catch {
+      await get().load();
+    }
+  };
 
-  markAsRead: (id) => {
-    set((s) => {
-      const updated = s.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
-      );
-      return {
-        notifications: updated,
-        unreadCount: updated.filter((n) => !n.read).length,
-      };
-    });
-  },
+  return {
+    notifications: [],
+    unreadCount: 0,
 
-  markAllAsRead: () => {
-    set((s) => ({
-      notifications: s.notifications.map((n) => ({ ...n, read: true })),
-      unreadCount: 0,
-    }));
-  },
+    load: async () => {
+      try {
+        const notifications = (await notificationApi.getMine()).map(toNotification);
+        set({ notifications, unreadCount: countUnread(notifications) });
+      } catch {
+        // Keep the current list; the bell simply stays as it was.
+      }
+    },
 
-  removeNotification: (id) => {
-    const n = get().notifications.find((n) => n.id === id);
-    set((s) => ({
-      notifications: s.notifications.filter((n) => n.id !== id),
-      unreadCount: n && !n.read ? s.unreadCount - 1 : s.unreadCount,
-    }));
-  },
+    receive: (dto) => {
+      if (get().notifications.some((n) => n.id === String(dto.id))) return;
+      const notifications = [toNotification(dto), ...get().notifications];
+      set({ notifications, unreadCount: countUnread(notifications) });
+    },
 
-  clearAll: () => set({ notifications: [], unreadCount: 0 }),
-}));
+    markAsRead: (id) =>
+      optimistic(
+        (list) => list.map((n) => (n.id === id ? { ...n, read: true } : n)),
+        () => notificationApi.markAsRead(Number(id)),
+      ),
+
+    markAllAsRead: () =>
+      optimistic(
+        (list) => list.map((n) => ({ ...n, read: true })),
+        () => notificationApi.markAllAsRead(),
+      ),
+
+    removeNotification: (id) =>
+      optimistic(
+        (list) => list.filter((n) => n.id !== id),
+        () => notificationApi.remove(Number(id)),
+      ),
+
+    clearAll: () => set({ notifications: [], unreadCount: 0 }),
+  };
+});

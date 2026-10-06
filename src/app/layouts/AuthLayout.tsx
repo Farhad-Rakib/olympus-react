@@ -3,22 +3,26 @@ import { Outlet } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { siteSettingsApi } from '../../core/api/services/site-settings.api';
 import { useSiteSettingsStore } from '../../core/stores/site-settings.store';
+import { useAuthStore } from '../../features/auth/store/auth.store';
 
 export const AuthLayout: React.FC = () => {
   const { siteTitle, setSettings, settings } = useSiteSettingsStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const { data: fetchedSettings } = useQuery({
     queryKey: ['site-settings-all'],
     queryFn: () => siteSettingsApi.getAll().catch(() => []),
     staleTime: 5 * 60 * 1000,
     retry: false,
+    // Settings require authentication; signed-out visitors use the last cached values.
+    enabled: isAuthenticated,
   });
 
   useEffect(() => {
     if (fetchedSettings && fetchedSettings.length > 0 && fetchedSettings !== settings) {
       setSettings(fetchedSettings);
     }
-  }, [fetchedSettings]);
+  }, [fetchedSettings, settings, setSettings]);
 
   const getVal = (key: string) => {
     const list = fetchedSettings || settings;

@@ -1,33 +1,32 @@
-export interface StatCard {
-  id: string;
-  title: string;
-  value: string | number;
-  change: number;
-  changeType: 'increase' | 'decrease';
-  icon: string;
-  color: string;
+export interface DashboardStats {
+  totalUsers: number;
+  activeUsers: number;
+  newUsers: number;
+  totalRoles: number;
+  requests: number;
+  failedRequests: number;
 }
 
-export interface ChartData {
-  name: string;
-  value: number;
-  [key: string]: string | number;
+/** API traffic for one day (ISO date, yyyy-mm-dd). */
+export interface DailyActivity {
+  date: string;
+  requests: number;
+  failed: number;
+}
+
+export interface RecentActivity {
+  id: number;
+  user: string;
+  action: string;
+  method: string;
+  statusCode: number | null;
+  success: boolean;
+  timestamp: string;
 }
 
 export interface DashboardData {
-  stats: StatCard[];
-  chartData: {
-    revenue: ChartData[];
-    users: ChartData[];
-    orders: ChartData[];
-  };
-  recentActivity: Activity[];
-}
-
-export interface Activity {
-  id: string;
-  user: string;
-  action: string;
-  timestamp: string;
-  type: 'success' | 'warning' | 'error' | 'info';
+  days: number;
+  stats: DashboardStats;
+  activity: DailyActivity[];
+  recentActivity: RecentActivity[];
 }

@@ -3,7 +3,7 @@ export type ContentType = 'application/json' | 'multipart/form-data' | 'applicat
 export interface HttpRequestConfig {
   baseUrl?: string;
   contentType?: ContentType;
-  params?: Record<string, any>;
+  params?: object;
   headers?: Record<string, string>;
 }
 

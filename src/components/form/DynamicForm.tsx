@@ -1,8 +1,11 @@
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 import { getFieldErrors } from '../../core/api/api-error';
+import { FormFieldValue, FormValues } from './form.types';
+
+export type { FormFieldValue, FormValues } from './form.types';
 
 export type FieldType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file';
 
@@ -11,7 +14,7 @@ export interface FormField {
   label: string;
   type: FieldType;
   placeholder?: string;
-  defaultValue?: any;
+  defaultValue?: FormFieldValue;
   required?: boolean;
   disabled?: boolean;
   options?: { label: string; value: string | number }[];
@@ -25,7 +28,7 @@ interface DynamicFormProps {
    * Return the API promise (e.g. `mutation.mutateAsync(...)`) to have server-side
    * validation errors shown next to the matching fields.
    */
-  onSubmit: (data: any) => unknown;
+  onSubmit: (data: FormValues) => unknown;
   submitLabel?: string;
   cancelLabel?: string;
   onCancel?: () => void;
@@ -70,7 +73,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     }, {})
   );
 
-  const defaultValues = fields.reduce<Record<string, any>>((acc, field) => {
+  const defaultValues = fields.reduce<FormValues>((acc, field) => {
     return { ...acc, [field.name]: field.defaultValue || '' };
   }, {});
 
@@ -79,12 +82,12 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<Record<string, any>>({
-    resolver: zodResolver(schema) as any,
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema) as unknown as Resolver<FormValues>,
     defaultValues,
   });
 
-  const submit = async (data: Record<string, unknown>) => {
+  const submit = async (data: FormValues) => {
     try {
       await onSubmit(data);
     } catch (error) {
@@ -129,7 +132,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                 return (
                   <textarea
                     id={field.name}
-                    value={value}
+                    value={String(value ?? '')}
                     onChange={onChange}
                     onBlur={onBlur}
                     placeholder={field.placeholder}
@@ -143,7 +146,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                 return (
                   <select
                     id={field.name}
-                    value={value}
+                    value={String(value ?? '')}
                     onChange={onChange}
                     onBlur={onBlur}
                     disabled={field.disabled || isLoading}
@@ -164,7 +167,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                     <input
                       type="checkbox"
                       id={field.name}
-                      checked={value}
+                      checked={Boolean(value)}
                       onChange={(e) => onChange(e.target.checked)}
                       onBlur={onBlur}
                       disabled={field.disabled || isLoading}
@@ -201,7 +204,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                   <input
                     type={field.type}
                     id={field.name}
-                    value={value}
+                    value={String(value ?? '')}
                     onChange={(e) => {
                       const val = field.type === 'number' ? Number(e.target.value) : e.target.value;
                       onChange(val);

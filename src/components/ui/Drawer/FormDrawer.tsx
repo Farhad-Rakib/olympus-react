@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
-import { DynamicForm, FormField } from '../../form/DynamicForm';
+import { DynamicForm, FormField, FormValues } from '../../form/DynamicForm';
 
 type DrawerPosition = 'left' | 'right';
 type DrawerSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -11,7 +11,7 @@ interface FormDrawerProps {
   title: string;
   description?: string;
   fields: FormField[];
-  onSubmit: (data: Record<string, any>) => void | Promise<void>;
+  onSubmit: (data: FormValues) => void | Promise<void>;
   submitLabel?: string;
   isLoading?: boolean;
   position?: DrawerPosition;

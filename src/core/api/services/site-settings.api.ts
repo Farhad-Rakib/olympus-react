@@ -45,7 +45,7 @@ class SiteSettingsApi extends BaseRepository {
   }
 
   async remove(id: number): Promise<void> {
-    const res = await this.delete<ApiResponse<any>>(`/${id}`);
+    const res = await this.delete<ApiResponse<unknown>>(`/${id}`);
     if (!res.success) throw new Error(res.message);
   }
 
@@ -62,7 +62,7 @@ class SiteSettingsApi extends BaseRepository {
   }
 
   async removePalette(id: number): Promise<void> {
-    const res = await this.delete<ApiResponse<any>>(`/palette/${id}`);
+    const res = await this.delete<ApiResponse<unknown>>(`/palette/${id}`);
     if (!res.success) throw new Error(res.message);
   }
 }

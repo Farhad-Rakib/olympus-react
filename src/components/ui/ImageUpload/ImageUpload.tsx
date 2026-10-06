@@ -39,7 +39,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
   const shapeClasses = shape === 'circle' ? 'rounded-full' : 'rounded-xl';
 
-  const validateFile = (file: File): string | null => {
+  const validateFile = useCallback((file: File): string | null => {
     const allowedTypes = accept.split(',').map(t => t.trim());
     if (!allowedTypes.includes(file.type)) {
       return `Invalid file type. Allowed: ${allowedTypes.map(t => t.split('/')[1]).join(', ')}`;
@@ -48,7 +48,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       return `File too large. Max size: ${maxSizeMB}MB`;
     }
     return null;
-  };
+  }, [accept, maxSizeMB]);
 
   const handleFile = useCallback(async (file: File) => {
     const validationError = validateFile(file);
@@ -63,12 +63,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     try {
       const url = await onUpload(file);
       onChange(url);
-    } catch (err: any) {
-      setError(err?.message || 'Upload failed');
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : 'Upload failed');
     } finally {
       setIsUploading(false);
     }
-  }, [onUpload, onChange, accept, maxSizeMB]);
+  }, [onUpload, onChange, validateFile]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();

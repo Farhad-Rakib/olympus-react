@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Pencil, Trash2, Mail, Eye } from 'lucide-react';
+import { Pencil, Mail, Eye } from 'lucide-react';
 import { DataTable, Column, RowAction } from '../../../components/table/DataTable';
-import { ConfirmDialog } from '../../../components/ui/Dialog/ConfirmDialog';
 import { Modal } from '../../../components/ui/Modal/Modal';
-import { DynamicForm, FormField } from '../../../components/form/DynamicForm';
+import { DynamicForm, FormField, FormValues } from '../../../components/form/DynamicForm';
 import { toast } from '../../../components/ui/Toast/toast.store';
 import { BaseRepository } from '../../../core/api/base.repository';
 import { ApiResponse } from '../../../domain/dto/auth.dto';
 import { getErrorMessage } from '../../../core/api/api-error';
+import { useAuthStore } from '../../auth/store/auth.store';
 
 interface UserDto {
   id: number;
@@ -44,8 +44,8 @@ class UsersApi extends BaseRepository {
 
 class AuthRegisterApi extends BaseRepository {
   constructor() { super('/Auth'); }
-  async register(dto: { fullName: string; email: string; password: string; roles: string[] }): Promise<any> {
-    const res = await this.post<ApiResponse<any>>('/register', dto);
+  async register(dto: { fullName: string; email: string; password: string }): Promise<unknown> {
+    const res = await this.post<ApiResponse<unknown>>('/register', dto);
     if (!res.success) throw new Error(res.message);
     return res.data;
   }
@@ -69,20 +69,22 @@ export const UsersPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editUser, setEditUser] = useState<UserDto | null>(null);
   const [viewUser, setViewUser] = useState<UserDto | null>(null);
-  const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
 
   const { data: users = [], isLoading, error, refetch } = useQuery({
     queryKey: ['users'],
     queryFn: () => usersApi.getAll(),
   });
 
+  // The role list is only needed for role assignment; users.read alone must not trigger 403s.
+  const canReadRoles = useAuthStore((s) => s.hasPermission('roles.read'));
   const { data: roles = [] } = useQuery({
     queryKey: ['roles-list'],
     queryFn: () => rolesListApi.getAll(),
+    enabled: canReadRoles,
   });
 
   const createMutation = useMutation({
-    mutationFn: (dto: { fullName: string; email: string; password: string; roles: string[] }) =>
+    mutationFn: (dto: { fullName: string; email: string; password: string }) =>
       authRegisterApi.register(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -158,13 +160,6 @@ export const UsersPage: React.FC = () => {
     { name: 'fullName', label: 'Full Name', type: 'text', required: true, placeholder: 'John Doe' },
     { name: 'email', label: 'Email', type: 'email', required: true, placeholder: 'john@example.com' },
     { name: 'password', label: 'Password', type: 'password', required: true, placeholder: 'Enter password' },
-    {
-      name: 'role',
-      label: 'Role',
-      type: 'select',
-      required: true,
-      options: roles.map(r => ({ label: r.name, value: r.name })),
-    },
   ];
 
   const editRoleFields: FormField[] = roles.length > 0 ? [
@@ -178,16 +173,15 @@ export const UsersPage: React.FC = () => {
     },
   ] : [];
 
-  const handleCreate = (data: Record<string, any>) => {
+  const handleCreate = (data: FormValues) => {
     createMutation.mutate({
-      fullName: data.fullName,
-      email: data.email,
-      password: data.password,
-      roles: data.role ? [data.role] : [],
+      fullName: String(data.fullName),
+      email: String(data.email),
+      password: String(data.password),
     });
   };
 
-  const handleUpdateRoles = (data: Record<string, any>) => {
+  const handleUpdateRoles = (data: FormValues) => {
     if (!editUser) return;
     const roleIds = data.roleIds ? [Number(data.roleIds)] : [];
     updateRolesMutation.mutate({ userId: editUser.id, roleIds });

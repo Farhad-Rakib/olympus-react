@@ -34,7 +34,7 @@ class PermissionApi extends BaseRepository {
     return res.data;
   }
   async remove(id: number): Promise<void> {
-    await this.delete<any>(`/${id}`);
+    await this.delete<unknown>(`/${id}`);
   }
 }
 
@@ -126,7 +126,7 @@ export const PermissionsPage: React.FC = () => {
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Permission" size="md">
         <DynamicForm
           fields={createFields}
-          onSubmit={(data) => createMutation.mutateAsync({ name: data.name, description: data.description || '' })}
+          onSubmit={(data) => createMutation.mutateAsync({ name: String(data.name), description: String(data.description ?? '') })}
           submitLabel="Create Permission"
           onCancel={() => setShowAddModal(false)}
           isLoading={createMutation.isPending}
@@ -138,7 +138,7 @@ export const PermissionsPage: React.FC = () => {
           <DynamicForm
             key={editItem.id}
             fields={editFields}
-            onSubmit={(data) => updateMutation.mutateAsync({ id: editItem.id, dto: { name: data.name, description: data.description || '' } })}
+            onSubmit={(data) => updateMutation.mutateAsync({ id: editItem.id, dto: { name: String(data.name), description: String(data.description ?? '') } })}
             submitLabel="Update Permission"
             onCancel={() => setEditItem(null)}
             isLoading={updateMutation.isPending}

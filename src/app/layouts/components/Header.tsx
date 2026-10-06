@@ -74,7 +74,8 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   });
 
   const displayName = profile?.fullName || tokenPayload?.name || tokenPayload?.email || 'User';
-  const displayRole = profile?.roles?.[0] || tokenPayload?.role || tokenPayload?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || '';
+  const roleClaim = tokenPayload?.role ?? tokenPayload?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+  const displayRole = profile?.roles?.[0] || String((Array.isArray(roleClaim) ? roleClaim[0] : roleClaim) ?? '');
   const initials = displayName
     .split(' ')
     .map((p: string) => p[0])

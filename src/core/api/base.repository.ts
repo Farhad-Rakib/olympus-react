@@ -11,9 +11,9 @@ export interface IBaseRepository {
 }
 
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) prom.reject(error);
     else prom.resolve(token!);
@@ -57,7 +57,10 @@ export class BaseRepository implements IBaseRepository {
       async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // A 401 from login/refresh/etc. is a real auth failure, not an expired session.
+        const isAuthEndpoint = /\/auth\//i.test(`${originalRequest?.baseURL ?? ''}${originalRequest?.url ?? ''}`);
+
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
           if (isRefreshing) {
             return new Promise((resolve, reject) => {
               failedQueue.push({ resolve, reject });
@@ -72,6 +75,7 @@ export class BaseRepository implements IBaseRepository {
 
           const refreshToken = this.getRefreshToken();
           if (!refreshToken) {
+            isRefreshing = false;
             this.handleAuthError();
             return Promise.reject(error);
           }

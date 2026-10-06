@@ -17,7 +17,7 @@ export interface Column<T> {
   key: keyof T | string;
   label: string;
   sortable?: boolean;
-  render?: (value: any, row: T) => React.ReactNode;
+  render?: (value: unknown, row: T) => React.ReactNode;
   width?: string;
 }
 
@@ -54,7 +54,7 @@ interface DataTableProps<T> {
   onRetry?: () => void;
 }
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends object>({
   columns,
   data,
   isLoading,
@@ -76,6 +76,16 @@ export function DataTable<T extends Record<string, any>>({
     key: keyof T | null;
     order: 'asc' | 'desc';
   }>({ key: null, order: 'asc' });
+
+  // Without a server-side onSearch handler, filter the loaded rows locally.
+  const normalizedTerm = searchTerm.trim().toLowerCase();
+  const visibleData = onSearch || !normalizedTerm
+    ? data
+    : data.filter((row) =>
+        Object.values(row as Record<string, unknown>).some((value) =>
+          value != null && String(Array.isArray(value) ? value.join(' ') : value).toLowerCase().includes(normalizedTerm)
+        )
+      );
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -184,7 +194,7 @@ export function DataTable<T extends Record<string, any>>({
                     <Loader />
                   </td>
                 </tr>
-              ) : data.length === 0 ? (
+              ) : visibleData.length === 0 ? (
                 <tr>
                   <td colSpan={columns.length + (rowActions && rowActions.length > 0 ? 1 : 0)}>
                     <EmptyState
@@ -194,7 +204,7 @@ export function DataTable<T extends Record<string, any>>({
                   </td>
                 </tr>
               ) : (
-                data.map((row, rowIndex) => (
+                visibleData.map((row, rowIndex) => (
                   <tr
                     key={rowIndex}
                     className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"

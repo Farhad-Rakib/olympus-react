@@ -1,3 +1,7 @@
+const apiBaseURL: string = import.meta.env.VITE_API_BASE_URL || 'https://localhost:5001/api/v1';
+// SignalR hubs are served from the API origin, outside the versioned /api/vN path.
+const apiOrigin = apiBaseURL.replace(/\/api\/v\d+\/?$/, '');
+
 export const AppConfig = {
   app: {
     name: 'Admin Template',
@@ -7,9 +11,13 @@ export const AppConfig = {
   },
 
   api: {
-    baseURL: 'https://localhost:5001/api/v1',
+    baseURL: apiBaseURL,
     timeout: 30000,
     withCredentials: true,
+  },
+
+  hubs: {
+    notifications: `${apiOrigin}/hubs/notifications`,
   },
 
   auth: {

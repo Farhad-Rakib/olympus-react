@@ -35,7 +35,7 @@ class RoleApi extends BaseRepository {
     return res.data;
   }
   async remove(id: number): Promise<void> {
-    await this.delete<any>(`/${id}`);
+    await this.delete<unknown>(`/${id}`);
   }
 }
 
@@ -144,7 +144,7 @@ export const RolesPage: React.FC = () => {
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Role" size="md">
         <DynamicForm
           fields={createFields}
-          onSubmit={(data) => createMutation.mutateAsync({ name: data.name, description: data.description || '' })}
+          onSubmit={(data) => createMutation.mutateAsync({ name: String(data.name), description: String(data.description ?? '') })}
           submitLabel="Create Role"
           onCancel={() => setShowAddModal(false)}
           isLoading={createMutation.isPending}
@@ -156,7 +156,7 @@ export const RolesPage: React.FC = () => {
           <DynamicForm
             key={editRole.id}
             fields={editFields}
-            onSubmit={(data) => updateMutation.mutateAsync({ id: editRole.id, dto: { name: data.name, description: data.description || '' } })}
+            onSubmit={(data) => updateMutation.mutateAsync({ id: editRole.id, dto: { name: String(data.name), description: String(data.description ?? '') } })}
             submitLabel="Update Role"
             onCancel={() => setEditRole(null)}
             isLoading={updateMutation.isPending}

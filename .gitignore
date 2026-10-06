@@ -28,3 +28,12 @@ pnpm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Claude Code
+CLAUDE.md
+IMPROVEMENTS.md
+
+# Playwright
+test-results/
+e2e-report/
+playwright/.cache/

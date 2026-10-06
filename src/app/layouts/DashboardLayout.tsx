@@ -6,10 +6,12 @@ import { Header } from './components/Header';
 import { CommandPalette } from '../../components/CommandPalette/CommandPalette';
 import { siteSettingsApi } from '../../core/api/services/site-settings.api';
 import { useSiteSettingsStore } from '../../core/stores/site-settings.store';
+import { useNotificationHub } from '../../core/realtime/useNotificationHub';
 
 export const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { setSidebarColors, setSettings } = useSiteSettingsStore();
+  useNotificationHub();
 
   const { data: allSettings } = useQuery({
     queryKey: ['site-settings-all'],

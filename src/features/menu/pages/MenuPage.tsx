@@ -4,7 +4,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { DataTable, Column, RowAction } from '../../../components/table/DataTable';
 import { ConfirmDialog } from '../../../components/ui/Dialog/ConfirmDialog';
 import { Modal } from '../../../components/ui/Modal/Modal';
-import { DynamicForm, FormField } from '../../../components/form/DynamicForm';
+import { DynamicForm, FormField, FormValues } from '../../../components/form/DynamicForm';
 import { toast } from '../../../components/ui/Toast/toast.store';
 import { BaseRepository } from '../../../core/api/base.repository';
 import { ApiResponse } from '../../../domain/dto/auth.dto';
@@ -41,11 +41,11 @@ class MenuCrudApi extends BaseRepository {
     return res.data;
   }
   async update(id: number, dto: CreateMenuDto): Promise<void> {
-    const res = await this.put<ApiResponse<any>>(`/${id}`, dto);
+    const res = await this.put<ApiResponse<unknown>>(`/${id}`, dto);
     if (!res.success) throw new Error(res.message);
   }
   async remove(id: number): Promise<void> {
-    await this.delete<any>(`/${id}`);
+    await this.delete<unknown>(`/${id}`);
   }
 }
 
@@ -126,13 +126,13 @@ export const MenuPage: React.FC = () => {
     { key: 'id', label: 'ID', width: '60px' },
     { key: 'title', label: 'Title', sortable: true },
     { key: 'url', label: 'URL', sortable: true, render: (val) => val ? (
-      <code className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">{val}</code>
+      <code className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">{String(val)}</code>
     ) : <span className="text-xs text-gray-400">-</span> },
     { key: 'icon', label: 'Icon', render: (val) => (
-      <span className="text-xs text-gray-500 dark:text-gray-400">{val || '-'}</span>
+      <span className="text-xs text-gray-500 dark:text-gray-400">{val ? String(val) : '-'}</span>
     )},
     { key: 'requiredPermission', label: 'Permission', render: (val) => val ? (
-      <span className="px-2 py-0.5 text-xs font-medium rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{val}</span>
+      <span className="px-2 py-0.5 text-xs font-medium rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{String(val)}</span>
     ) : <span className="text-xs text-gray-400">Public</span>},
     { key: 'parentMenuId', label: 'Parent', width: '80px', render: (val) => {
       if (!val) return <span className="text-xs text-gray-400">Root</span>;
@@ -167,25 +167,25 @@ export const MenuPage: React.FC = () => {
     { name: 'parentMenuId', label: 'Parent Menu', type: 'select', options: parentOptions, defaultValue: editItem?.parentMenuId || 0 },
   ];
 
-  const handleCreate = (data: Record<string, any>) => {
+  const handleCreate = (data: FormValues) => {
     createMutation.mutate({
-      title: data.title,
-      url: data.url || null,
-      icon: data.icon || null,
-      requiredPermission: data.requiredPermission || null,
+      title: String(data.title),
+      url: data.url ? String(data.url) : null,
+      icon: data.icon ? String(data.icon) : null,
+      requiredPermission: data.requiredPermission ? String(data.requiredPermission) : null,
       parentMenuId: data.parentMenuId ? Number(data.parentMenuId) : null,
     });
   };
 
-  const handleUpdate = (data: Record<string, any>) => {
+  const handleUpdate = (data: FormValues) => {
     if (!editItem) return;
     updateMutation.mutate({
       id: editItem.id,
       dto: {
-        title: data.title,
-        url: data.url || null,
-        icon: data.icon || null,
-        requiredPermission: data.requiredPermission || null,
+        title: String(data.title),
+        url: data.url ? String(data.url) : null,
+        icon: data.icon ? String(data.icon) : null,
+        requiredPermission: data.requiredPermission ? String(data.requiredPermission) : null,
         parentMenuId: data.parentMenuId ? Number(data.parentMenuId) : null,
       },
     });

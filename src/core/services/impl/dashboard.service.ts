@@ -1,5 +1,5 @@
 import { BaseRepository } from '../../api/base.repository';
-import { GetDashboardResponseDto } from '../../../domain/dto/dashboard.dto';
+import { GetDashboardApiResponse, GetDashboardResponseDto } from '../../../domain/dto/dashboard.dto';
 import { IDashboardService } from '../dashboard.service.interface';
 
 export class DashboardService extends BaseRepository implements IDashboardService {
@@ -7,7 +7,11 @@ export class DashboardService extends BaseRepository implements IDashboardServic
     super('/Dashboard');
   }
 
-  async getDashboardData(): Promise<GetDashboardResponseDto> {
-    return this.get<GetDashboardResponseDto>('');
+  async getDashboardData(days: number): Promise<GetDashboardResponseDto> {
+    const response = await this.get<GetDashboardApiResponse>('', { params: { days } });
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to load dashboard');
+    }
+    return response.data;
   }
 }

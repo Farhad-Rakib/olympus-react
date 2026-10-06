@@ -5,6 +5,7 @@ import { siteSettingsApi, SiteSettingDto, ColorPaletteDto } from '../../../core/
 import { toast } from '../../../components/ui/Toast/toast.store';
 import { useSiteSettingsStore } from '../../../core/stores/site-settings.store';
 import { ConfirmDialog } from '../../../components/ui/Dialog/ConfirmDialog';
+import { SignInMethodsCard } from '../components/SignInMethodsCard';
 import { Modal } from '../../../components/ui/Modal/Modal';
 import { getErrorMessage } from '../../../core/api/api-error';
 
@@ -145,6 +146,8 @@ export const SiteSettingsPage: React.FC = () => {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Site Settings</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-1">Manage application settings and sidebar color palette</p>
       </div>
+
+      <SignInMethodsCard />
 
       {/* Color Palette Section */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">

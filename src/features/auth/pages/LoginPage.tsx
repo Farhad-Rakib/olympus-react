@@ -1,23 +1,47 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { LogIn, ArrowLeft, Mail } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { toast } from '../../../components/ui/Toast/toast.store';
 import { AppConfig } from '../../../core/config/app.config';
 import { AuthService } from '../../../core/services/impl/auth.service';
+import { ExternalSignInButtons } from '../components/ExternalSignInButtons';
 
 const authService = new AuthService();
+
+/** Messages for the error codes the API puts on /login?error=... after a provider callback. */
+const EXTERNAL_ERRORS: Record<string, string> = {
+  external_expired: 'That sign-in attempt expired. Please try again.',
+  external_cancelled: 'Sign-in was cancelled.',
+  external_unavailable: 'That sign-in method is not available.',
+  external_no_email: 'The provider did not share an email address, so we could not sign you in.',
+  external_email_in_use: 'An account with this email already exists. Sign in with your password instead.',
+  external_inactive: 'This account is disabled.',
+  external_failed: 'Sign-in with the provider failed. Please try again.',
+};
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isLoading } = useAuthStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const externalError = searchParams.get('error');
+  const shownError = useRef<string | null>(null);
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
 
-  const from = (location.state as any)?.from?.pathname || AppConfig.auth.defaultRedirect;
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || AppConfig.auth.defaultRedirect;
+
+  useEffect(() => {
+    // Show each error once, even if the effect runs twice (React StrictMode).
+    if (!externalError || shownError.current === externalError) return;
+    shownError.current = externalError;
+    toast.error(EXTERNAL_ERRORS[externalError] ?? 'Sign-in failed. Please try again.');
+    // Clear the code so a refresh does not show the message again.
+    setSearchParams({}, { replace: true });
+  }, [externalError, setSearchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +49,8 @@ export const LoginPage: React.FC = () => {
       await login(credentials);
       toast.success('Login successful!');
       navigate(from, { replace: true });
-    } catch (error: any) {
-      toast.error(error.message || 'Login failed. Please try again.');
+    } catch (error) {
+      toast.error(error instanceof Error && error.message ? error.message : 'Login failed. Please try again.');
     }
   };
 
@@ -39,8 +63,8 @@ export const LoginPage: React.FC = () => {
       toast.success(msg || 'Password reset link sent to your email');
       setShowForgotPassword(false);
       setForgotEmail('');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to send reset email');
+    } catch (error) {
+      toast.error(error instanceof Error && error.message ? error.message : 'Failed to send reset email');
     } finally {
       setForgotLoading(false);
     }
@@ -172,6 +196,8 @@ export const LoginPage: React.FC = () => {
           )}
         </button>
       </form>
+
+      <ExternalSignInButtons returnUrl={from} disabled={isLoading} />
     </div>
   );
 };

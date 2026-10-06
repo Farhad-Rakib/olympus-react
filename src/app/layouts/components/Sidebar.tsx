@@ -68,7 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const getIcon = (iconName?: string | null) => {
     if (!iconName) return null;
     const mapped = iconMap[iconName.toLowerCase()] || iconName;
-    const Icon = (Icons as any)[mapped];
+    const Icon = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }> | undefined>)[mapped];
     return Icon ? <Icon className="w-5 h-5" /> : null;
   };
 
@@ -79,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
     if (hasChildren) {
       return (
-        <div key={item.id}>
+        <div key={item.id ?? item.url ?? item.title}>
           <button
             onClick={() => toggleExpand(item.title)}
             className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
@@ -118,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
     return (
       <Link
-        key={item.id}
+        key={item.id ?? item.url ?? item.title}
         to={item.url}
         onClick={onClose}
         className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
@@ -149,11 +149,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const childIds = new Set<number>();
   menuItems.forEach(item => {
     if (item.children) {
-      item.children.forEach(child => childIds.add(child.id));
+      // The per-user menu tree has no ids; only dedupe items that actually have one.
+      item.children.forEach(child => { if (child.id != null) childIds.add(child.id); });
     }
   });
   const dedupedItems = menuItems.filter(item =>
-    !childIds.has(item.id) && ((item.children && item.children.length > 0) || item.url)
+    !(item.id != null && childIds.has(item.id)) && ((item.children && item.children.length > 0) || item.url)
   );
 
   return (
