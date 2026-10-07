@@ -292,9 +292,20 @@ test.describe('Audit logs', () => {
 
 test.describe('Notifications', () => {
   test('CFG-007/009 a notification arrives in real time and read state persists', async ({ page }) => {
+    // The hub connects in the background after login; a push sent before it is up is
+    // never delivered. Wait for a handshaken socket that is still open (StrictMode
+    // opens and closes a first one in dev).
+    const readySockets = new Set<object>();
+    page.on('websocket', (ws) => {
+      if (!ws.url().includes('/hubs/notifications')) return;
+      ws.on('framereceived', () => { if (!ws.isClosed()) readySockets.add(ws); });
+      ws.on('close', () => readySockets.delete(ws));
+    });
+
     await login(page, USERS.user);
     const bell = page.locator('header button').filter({ has: page.locator('svg.lucide-bell') });
     await expect(bell).toBeVisible();
+    await expect.poll(() => readySockets.size, { timeout: 15_000 }).toBeGreaterThan(0);
 
     const sa = await apiLogin(USERS.superadmin.email, USERS.superadmin.password);
     const me = await api('GET', '/users/me', undefined, (await apiLogin(USERS.user.email, USERS.user.password)).accessToken);
@@ -309,7 +320,12 @@ test.describe('Notifications', () => {
     const item = page.getByText(title).last();
     await expect(item).toBeVisible();
 
+    // The UI marks them read optimistically; wait for the server to save it before
+    // reloading, or the reload cancels the request.
+    const markedRead = page.waitForResponse((r) =>
+      /\/notifications\/read-all/i.test(r.url()) && r.request().method() === 'POST');
     await page.getByRole('button', { name: /mark all read/i }).click();
+    expect((await markedRead).ok()).toBe(true);
     await page.reload();
     const list = await api('GET', '/notifications', undefined, (await apiLogin(USERS.user.email, USERS.user.password)).accessToken);
     expect(list.json.data.find((n: { title: string }) => n.title === title)?.isRead).toBe(true);
